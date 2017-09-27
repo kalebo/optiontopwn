@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+
+	"../common"
 )
 
 func main() {
@@ -17,15 +19,15 @@ func main() {
 	host, _ := os.Hostname()
 	currentUser, _ := user.Current()
 
-	values := map[string]string{"victim": currentUser.Username, "perpetrator": *perpPtr, "host": host}
+	a := common.Record{Victim: currentUser.Username, Perpetrator: *perpPtr, Host: host}
 
-	jsonBlob, _ := json.Marshal(values)
+	jsonBlob, _ := json.Marshal(a)
 
-	_, err := http.Post("http://avari.byu.edu:9999/recordPwn", "application/json; charset=utf-8", bytes.NewBuffer(jsonBlob))
+	_, err := http.Post("http://avari.byu.edu:9999/submit", "application/json; charset=utf-8", bytes.NewBuffer(jsonBlob))
 
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("Recorded pwn by %s on %s for %s\n", *perpPtr, host, currentUser.Username)
+		fmt.Println("Recorded pwn!")
 	}
 }
