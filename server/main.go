@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS scoreboard (
 
 type TimestampedRecord struct {
 	common.Record
-	Timestamp string `json:"timestamp"`
-	ID        int    `json:"id"`
+	Timestamp int `json:"timestamp"`
+	ID        int `json:"id"`
 }
 
 type Score struct {
@@ -80,10 +80,10 @@ func handlePwn(rw http.ResponseWriter, r *http.Request) {
 func serveRawScores(rw http.ResponseWriter, r *http.Request) {
 	var records []TimestampedRecord
 
-	rows, err := db.Query("select rowid, victim, perpetrator, host FROM scoreboard")
+	rows, err := db.Query("select rowid, victim, perpetrator, host, timestamp FROM scoreboard")
 	for rows.Next() {
 		var record TimestampedRecord
-		if err := rows.Scan(&record.ID, &record.Victim, &record.Perpetrator, &record.Host); err != nil {
+		if err := rows.Scan(&record.ID, &record.Victim, &record.Perpetrator, &record.Host, &record.Timestamp); err != nil {
 			log.Fatalf("Unable extract records from DB: %s", err)
 		}
 
