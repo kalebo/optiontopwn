@@ -53,7 +53,6 @@ func init() {
 func main() {
 	http.HandleFunc("/submit", handlePwn)
 	http.HandleFunc("/raw", serveRawScores)
-	http.HandleFunc("/", handlePwn)
 	http.ListenAndServe(":9999", nil)
 }
 
@@ -65,6 +64,7 @@ func handlePwn(rw http.ResponseWriter, r *http.Request) {
 	if record.Victim == "" || record.Perpetrator == "" || record.Host == "" {
 		log.Print("Invalid json record.")
 		http.Error(rw, "Invalid json record.", http.StatusBadRequest)
+		return
 	}
 
 	fmt.Printf("Recived pwn from %s (%s): %s took an option on %s\n", record.Host, r.RemoteAddr, record.Perpetrator, record.Victim)
@@ -75,9 +75,6 @@ func handlePwn(rw http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to insert into database: %s", err)
 	}
 
-}
-
-func serveScores(rw http.ResponseWriter, r *http.Request) {
 }
 
 func serveRawScores(rw http.ResponseWriter, r *http.Request) {
