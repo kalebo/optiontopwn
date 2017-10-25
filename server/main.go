@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -70,6 +71,7 @@ func main() {
 	http.HandleFunc("/submit", handlePwn)
 	http.HandleFunc("/raw.json", serveRawScores)
 	http.HandleFunc("/graph.json", serveGraphScores)
+	http.HandleFunc("/", serveGraph)
 	http.ListenAndServe(":9999", nil)
 }
 
@@ -84,10 +86,12 @@ func handlePwn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Recived pwn from %s (%s): %s took an option on %s\n", record.Host, r.RemoteAddr, record.Perpetrator, record.Victim)
+	victim_cleaned := strings.Split(record.Victim, "\\")[1] // remove the domain prefix for now
+
+	fmt.Printf("Recived pwn from %s (%s): %s took an option on %s\n", record.Host, r.RemoteAddr, record.Perpetrator, victim_cleaned)
 	stmt, _ := db.Prepare("INSERT INTO scoreboard (ip, victim, perpetrator, host, timestamp) VALUES (?, ?, ?, ?, ?)")
 
-	_, err := stmt.Exec(r.RemoteAddr, record.Victim, record.Perpetrator, record.Host, time.Now().Unix())
+	_, err := stmt.Exec(r.RemoteAddr, victim_cleaned, record.Perpetrator, record.Host, time.Now().Unix())
 	if err != nil {
 		log.Fatalf("Unable to insert into database: %s", err)
 	}
@@ -191,4 +195,8 @@ func serveGraphScores(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("Unable to marshal records from DB: %s", err)
 	}
+}
+
+func serveGraph(rw http.ResponseWriter, r *http.Request) {
+	http.ServeFile(rw, r, "./server/main.html")
 }
