@@ -68,10 +68,10 @@ func init() {
 }
 
 func main() {
+	http.HandleFunc("/", serveGraph)
 	http.HandleFunc("/submit", handlePwn)
 	http.HandleFunc("/raw.json", serveRawScores)
 	http.HandleFunc("/graph.json", serveGraphScores)
-	http.HandleFunc("/", serveGraph)
 	http.ListenAndServe(":9999", nil)
 }
 
@@ -86,12 +86,14 @@ func handlePwn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	victim_cleaned := strings.Split(record.Victim, "\\")[1] // remove the domain prefix for now
+	if strings.Contains(record.Victim, "\\") {
+		record.Victim = strings.Split(record.Victim, "\\")[1] // remove the domain prefix for now
+	}
 
-	fmt.Printf("Recived pwn from %s (%s): %s took an option on %s\n", record.Host, r.RemoteAddr, record.Perpetrator, victim_cleaned)
+	fmt.Printf("Recived pwn from %s (%s): %s took an option on %s\n", record.Host, r.RemoteAddr, record.Perpetrator, record.Victim)
 	stmt, _ := db.Prepare("INSERT INTO scoreboard (ip, victim, perpetrator, host, timestamp) VALUES (?, ?, ?, ?, ?)")
 
-	_, err := stmt.Exec(r.RemoteAddr, victim_cleaned, record.Perpetrator, record.Host, time.Now().Unix())
+	_, err := stmt.Exec(r.RemoteAddr, record.Victim, record.Perpetrator, record.Host, time.Now().Unix())
 	if err != nil {
 		log.Fatalf("Unable to insert into database: %s", err)
 	}
