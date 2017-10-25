@@ -36,6 +36,22 @@ type Score struct {
 	PerpetratorCount int    `json:"perpetrator_count"`
 }
 
+type Graph struct {
+	Nodes []GraphNode `json:"nodes"`
+	Links []GraphLink `json:"links"`
+}
+
+type GraphNode struct {
+	ID string `json:"id"`
+}
+
+type GraphLink struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Type   string `json:"type"`
+	Value  int    `json:"value"`
+}
+
 var db *sql.DB
 
 func init() {
@@ -52,7 +68,8 @@ func init() {
 
 func main() {
 	http.HandleFunc("/submit", handlePwn)
-	http.HandleFunc("/raw", serveRawScores)
+	http.HandleFunc("/raw.json", serveRawScores)
+	http.HandleFunc("/graph.json", serveGraphScores)
 	http.ListenAndServe(":9999", nil)
 }
 
@@ -95,6 +112,82 @@ func serveRawScores(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	err = json.NewEncoder(rw).Encode(records)
+	if err != nil {
+		log.Fatalf("Unable to marshal records from DB: %s", err)
+	}
+}
+
+func countFrequency(list []common.Record) []GraphLink {
+	freq := make(map[string]*GraphLink)
+
+	for _, item := range list {
+		key := item.Perpetrator + "->" + item.Victim
+		_, exists := freq[key]
+
+		if exists {
+			freq[key].Value++
+		} else {
+			temp := GraphLink{Source: item.Perpetrator, Target: item.Victim, Type: "pwnd", Value: 1}
+			freq[key] = &temp
+		}
+
+	}
+
+	var result []GraphLink
+
+	for _, item := range freq {
+		result = append(result, *item)
+	}
+
+	return result
+}
+
+func makeNodes(list []common.Record) []GraphNode {
+	nodes := make(map[string]*GraphNode)
+
+	for _, item := range list {
+		_, existsPerp := nodes[item.Perpetrator]
+		_, existsVict := nodes[item.Victim]
+
+		if !existsPerp {
+			nodes[item.Perpetrator] = &GraphNode{ID: item.Perpetrator}
+		}
+
+		if !existsVict {
+			nodes[item.Victim] = &GraphNode{ID: item.Victim}
+		}
+	}
+
+	var result []GraphNode
+
+	for _, item := range nodes {
+		result = append(result, *item)
+	}
+
+	return result
+}
+
+func serveGraphScores(rw http.ResponseWriter, r *http.Request) {
+	var records []common.Record
+
+	rows, err := db.Query("select victim, perpetrator, host FROM scoreboard")
+	for rows.Next() {
+		var record common.Record
+		if err := rows.Scan(&record.Victim, &record.Perpetrator, &record.Host); err != nil {
+			log.Fatalf("Unable extract records from DB: %s", err)
+		}
+
+		records = append(records, record)
+
+	}
+	if rows.Err() != nil {
+		log.Fatalf("Unable extract records from DB: %s", err)
+	}
+	nodes := makeNodes(records)
+	links := countFrequency(records)
+	graph := Graph{Nodes: nodes, Links: links}
+
+	err = json.NewEncoder(rw).Encode(graph)
 	if err != nil {
 		log.Fatalf("Unable to marshal records from DB: %s", err)
 	}
