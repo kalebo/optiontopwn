@@ -5,13 +5,36 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style type="text/css">
+        body {
+            background: black;
+            color: #999;
+            font-family: sans-serif;
+        }
+
         .node {}
 
-        .link { stroke: #999; stroke-opacity: .6;}
+        .link { 
+            stroke: #999;
+            stroke-opacity: .6;
+        }
+
+
+
     </style>
 </head>
 <body>
+
+<h1>Option2Pwn</h1>
 <svg width="960" height="600"></svg>
+<p>This graph shows who pwn'd who in the office. The edge weight increases the more times someone pwns someone else.</p>
+<p>You can get most of the raw data from the DB in json format <a href="raw.json">here</a>.</p>
+
+<p>Download the clients (64bit) for <a href="client"> linux</a> and <a href="client.exe">windows</a>.</p>
+
+<h3>Most recent pwns</h3>
+
+
+
 
 <script src="http://d3js.org/d3.v4.min.js" type="text/javascript"></script>
 <script src="http://d3js.org/d3-selection-multi.v1.js"></script>
@@ -182,7 +205,7 @@
         d.fx = d3.event.x;
         d.fy = d3.event.y;
     }
-
+u
 //    function dragended(d) {
 //        if (!d3.event.active) simulation.alphaTarget(0);
 //        d.fx = undefined;

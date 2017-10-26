@@ -69,7 +69,8 @@ func init() {
 
 func main() {
 	http.HandleFunc("/", serveGraph)
-	http.HandleFunc("/test", serveGraphTest)
+	http.HandleFunc("/client", serveBinaryLinux)
+	http.HandleFunc("/client.exe", serveBinaryWindows)
 	http.HandleFunc("/submit", handlePwn)
 	http.HandleFunc("/raw.json", serveRawScores)
 	http.HandleFunc("/graph.json", serveGraphScores)
@@ -200,10 +201,17 @@ func serveGraphScores(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Yes, I know about http.Fileserver, but its not going to stay like this
+// anyway. Ultimately I want to embed the client binaries in the server so the
+// main page always returns the most recent clients for a build.
 func serveGraph(rw http.ResponseWriter, r *http.Request) {
-	http.ServeFile(rw, r, "./server/main.html")
+	http.ServeFile(rw, r, "./static/main.html")
 }
 
-func serveGraphTest(rw http.ResponseWriter, r *http.Request) {
-	http.ServeFile(rw, r, "./server/testing.html")
+func serveBinaryWindows(rw http.ResponseWriter, r *http.Request) {
+	http.ServeFile(rw, r, "./static/client.exe")
+}
+
+func serveBinaryLinux(rw http.ResponseWriter, r *http.Request) {
+	http.ServeFile(rw, r, "./static/client")
 }
