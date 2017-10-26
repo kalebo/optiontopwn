@@ -69,6 +69,7 @@ func init() {
 
 func main() {
 	http.HandleFunc("/", serveGraph)
+	http.HandleFunc("/test", serveGraphTest)
 	http.HandleFunc("/submit", handlePwn)
 	http.HandleFunc("/raw.json", serveRawScores)
 	http.HandleFunc("/graph.json", serveGraphScores)
@@ -201,4 +202,8 @@ func serveGraphScores(rw http.ResponseWriter, r *http.Request) {
 
 func serveGraph(rw http.ResponseWriter, r *http.Request) {
 	http.ServeFile(rw, r, "./server/main.html")
+}
+
+func serveGraphTest(rw http.ResponseWriter, r *http.Request) {
+	http.ServeFile(rw, r, "./server/testing.html")
 }

@@ -7,7 +7,7 @@
     <style type="text/css">
         .node {}
 
-        .link { stroke: #999; stroke-opacity: .6; stroke-width: 1px; }
+        .link { stroke: #999; stroke-opacity: .6;}
     </style>
 </head>
 <body>
@@ -28,11 +28,12 @@
     svg.append('defs').append('marker')
         .attrs({'id':'arrowhead',
             'viewBox':'-0 -5 10 10',
-            'refX':13,
+            'refX':15,
             'refY':0,
             'orient':'auto',
             'markerWidth':10,
             'markerHeight':10,
+            'markerUnits':'userSpaceOnUse',
             'xoverflow':'visible'})
         .append('svg:path')
         .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
@@ -40,9 +41,19 @@
         .style('stroke','none');
 
     var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(function (d) {return d.id;}).distance(100).strength(1))
-        .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2));
+        .force("link", d3.forceLink().id(function (d) {return d.id;}).distance(10).strength(0.1))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide",d3.forceCollide( function(d){return 8 }).iterations(16) );
+
+//    var force = d3.layout.force()
+//        .nodes(nodes)
+//        .links(links)
+//        .size([width, height])
+//        .linkDistance(60)
+//        .charge(-300)
+//        .on("tick", tick)
+//        .start();
 
     d3.json("graph.json", function (error, graph) {
         if (error) throw error;
@@ -53,9 +64,11 @@
         link = svg.selectAll(".link")
             .data(links)
             .enter()
-            .append("line")
+            .append("path")
             .attr("class", "link")
+            .attr("fill", "none")
             .attr('marker-end','url(#arrowhead)')
+            .attr("stroke-width", function (d, i) {return Math.sqrt(d.value) * 1.3 })
 
         link.append("title")
             .text(function (d) {return d.type;});
@@ -81,15 +94,16 @@
                 'class': 'edgelabel',
                 'id': function (d, i) {return 'edgelabel' + i},
                 'font-size': 10,
+                'font-family': 'Arial',
                 'fill': '#aaa'
             });
 
-        //edgelabels.append('textPath')
-        //    .attr('xlink:href', function (d, i) {return '#edgepath' + i})
-        //    .style("text-anchor", "middle")
-        //    .style("pointer-events", "none")
-        //    .attr("startOffset", "50%")
-        //    .text(function (d) {return d.type});
+        edgelabels.append('textPath')
+            .attr('xlink:href', function (d, i) {return '#edgepath' + i})
+            .style("text-anchor", "middle")
+            .style("pointer-events", "none")
+            .attr("startOffset", "50%")
+            .text(function (d) {return d.value});
 
         node = svg.selectAll(".node")
             .data(nodes)
@@ -110,7 +124,10 @@
             .text(function (d) {return d.id;});
 
         node.append("text")
-            .attr("dy", -3)
+            .style("text-anchor", "middle")
+            .style("fill", "#555")
+            .style("font-family", "Arial")
+            .attr("dy", -15)
             .text(function (d) {return d.id;});
 
         simulation
@@ -126,7 +143,13 @@
             .attr("x1", function (d) {return d.source.x;})
             .attr("y1", function (d) {return d.source.y;})
             .attr("x2", function (d) {return d.target.x;})
-            .attr("y2", function (d) {return d.target.y;});
+            .attr("y2", function (d) {return d.target.y;})
+            .attr("d", function (d) {
+            var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = Math.sqrt(dx * dx + dy * dy);
+            return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+            });
 
         node
             .attr("transform", function (d) {return "translate(" + d.x + ", " + d.y + ")";});
